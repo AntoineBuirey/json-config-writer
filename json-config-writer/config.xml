@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <elements>
+    <TextElement name="Username" default="user"/>
+    <BooleanElement name="Enable Feature" default="true"/>
+    <ChoiceElement name="Color Scheme" default="Light">
+        <Choice value="Light"/>
+        <Choice value="Dark"/>
+        <Choice value="System"/>
+    </ChoiceElement>
+    <IntegerElement name="Max Retries" default="3" min="0" max="10"/>
+    <FloatElement name="Threshold" default="0.5" min="0.0" max="1.0"/>
+    <ColorElement name="Favorite Color" default="#ff0000"/>
+    <DirectoryPathElement name="Output Directory" default="/tmp"/>
+    <FilePathElement name="Config File" default="/etc/config.json"/>
+</elements> -->
+<elements>
+    <FilePathElement name="server_config_path" default="/var/minecraft/servers.json"/>
+    <FilePathElement name="client_database_path" default="/var/minecraft/clients.db"/>
+</elements>

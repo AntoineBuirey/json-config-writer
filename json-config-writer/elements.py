@@ -1,20 +1,43 @@
 import re
-from typing import TypeVar
-from .abstract_elements import EditableElement as __EditableElement
-from .abstract_elements import BaseElement as __BaseElement
+from typing import TypeVar, Sequence, Any
+from abc import ABC, abstractmethod
+
+class BaseElement(ABC):
+    """
+    An abstract base class for all configuration elements.
+    """
+    def __init__(self, key: str):
+        self.__key = key
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(key={self.__key})"
+
+    @property
+    def key(self) -> str:
+        return self.__key
+
+class EditableElement(BaseElement, ABC):
+    """
+    An abstract base class for elements that allow a input from a free text field.
+    """
+    @abstractmethod
+    def from_string(self, value: str): ...
+
+    def get(self) -> Any: ...
 
 # text-based elements
-class TextElement(__EditableElement):
+class TextElement(EditableElement):
     """
     An abstract base class for text-based configuration elements.
     """
     def __init__(self, key: str, default: str = "", min_length : int = 0, max_length: int = -1, allowed_chars: str = r"a-zA-Z0-9_.-"):
         super().__init__(key)
-        self.__validate(default)
         self.__value = default
         self.__min_length = min_length
         self.__max_length = max_length # -1 means no limit
         self.__allowed_chars = re.compile(f"^[{allowed_chars}]*$")
+        
+        self.__validate(default)
 
     def __validate(self, value: str) -> None:
         if not isinstance(value, str):
@@ -35,6 +58,9 @@ class TextElement(__EditableElement):
 
     def get(self) -> str:
         return self.__value
+    
+    def from_string(self, value: str) -> None:
+        self.set(value)
 
 class ColorElement(TextElement):
     def __init__(self, key: str, default: str = "#000000"):
@@ -45,12 +71,15 @@ class PathElement(TextElement):
         # Allow / and \ in paths
         super().__init__(key, default, min_length=1, max_length=-1, allowed_chars=r"a-zA-Z0-9_.\-\\/")
 
+class FilePathElement(PathElement): ...
+class DirectoryPathElement(PathElement): ...
+
 T = TypeVar('T')
-class ChoiceElement(__EditableElement):
+class ChoiceElement(EditableElement):
     """
     A class for choice configuration elements.
     """
-    def __init__(self, key: str, choices: list[T], default: T):
+    def __init__(self, key: str, choices: Sequence[T], default: T):
         super().__init__(key)
         if not choices:
             raise ValueError("Choices list cannot be empty")
@@ -65,25 +94,29 @@ class ChoiceElement(__EditableElement):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(key={self.__key}, value={self.__value}, choices={self.__choices})"
 
-    def set(self, value: T) -> None:
+    def set(self, value: object) -> None:
         if value not in self.__choices:
             raise ValueError(f"Value must be one of the choices: {self.__choices}")
         self.__value = value
 
-    def get(self) -> T:
+    def get(self) -> object:
         return self.__value
+    
+    @property
+    def choices(self) -> Sequence[object]:
+        return self.__choices
 
 # number-based elements
-class IntegerElement(__EditableElement):
+class IntegerElement(EditableElement):
     """
     A class for integer configuration elements.
     """
     def __init__(self, key: str, default: int = 0, min_ : None|int = None, max_ : None|int = None):
         super().__init__(key)
-        self.__validate(default)
         self.__value = default
         self.__min = min_
         self.__max = max_
+        self.__validate(default)
 
     def __validate(self, value: int) -> None:
         if not isinstance(value, int):
@@ -110,16 +143,16 @@ class IntegerElement(__EditableElement):
     def get(self) -> int:
         return self.__value
 
-class FloatElement(__EditableElement):
+class FloatElement(EditableElement):
     """
     A class for float configuration elements.
     """
     def __init__(self, key: str, default: float = 0.0, min_ : None|float = None, max_ : None|float = None):
         super().__init__(key)
-        self.__validate(default)
         self.__value = default
         self.__min = min_
         self.__max = max_
+        self.__validate(default)
 
     def __validate(self, value: float) -> None:
         if not isinstance(value, float):
@@ -147,7 +180,7 @@ class FloatElement(__EditableElement):
         return self.__value
 
 # other elements
-class BooleanElement(__EditableElement):
+class BooleanElement(EditableElement):
     """
     A class for boolean configuration elements.
     """
@@ -174,7 +207,7 @@ class BooleanElement(__EditableElement):
     def get(self) -> bool:
         return self.__value
 
-class FixedElement(__BaseElement):
+class FixedElement(BaseElement):
     """
     A class for fixed configuration elements that cannot be edited.
     """
