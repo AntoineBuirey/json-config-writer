@@ -35,7 +35,7 @@ a = Analysis(
     # Data files to include
     datas=[
         # Include config.xml file
-        (os.path.join(source_dir, 'config.xml'), '.'),
+        (os.path.join(source_dir, 'config.xml'), 'json-config-writer'),
     ],
     
     # Hidden imports that PyInstaller might miss
