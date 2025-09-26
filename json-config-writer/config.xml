@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- <elements>
+<elements xmlns="http://json-config-writer/schema" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://json-config-writer/schema
+         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/heads/main/json-config-writer/config.xsd">
     <TextElement name="Username" default="user"/>
     <BooleanElement name="Enable Feature" default="true"/>
     <ChoiceElement name="Color Scheme" default="Light">
@@ -12,8 +15,8 @@
     <ColorElement name="Favorite Color" default="#ff0000"/>
     <DirectoryPathElement name="Output Directory" default="/tmp"/>
     <FilePathElement name="Config File" default="/etc/config.json"/>
-</elements> -->
-<elements>
+</elements>
+    <!-- 
     <FilePathElement name="server_config_path" default="/var/minecraft/servers.json"/>
     <FilePathElement name="client_database_path" default="/var/minecraft/clients.db"/>
-</elements>
+</elements> -->
