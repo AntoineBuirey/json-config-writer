@@ -67,10 +67,6 @@ jobs:
       run: |
         pyinstaller json-config-writer.spec --clean
 
-    - name: Verify build
-      run: |
-        ls -la dist/
-
     - name: Test executable (Linux)
       if: matrix.platform == 'linux'
       run: |
