@@ -1,0 +1,121 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            executable_extension: .exe
+            artifact_name: json-config-writer-windows
+          - os: ubuntu-latest
+            platform: linux
+            executable_extension: ""
+            artifact_name: json-config-writer-linux
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Create virtual environment
+      run: |
+        python -m venv venv
+        
+    - name: Activate virtual environment (Windows)
+      if: matrix.platform == 'windows'
+      run: |
+        venv\Scripts\activate
+        echo "VIRTUAL_ENV=$env:GITHUB_WORKSPACE\venv" >> $env:GITHUB_ENV
+        echo "$env:GITHUB_WORKSPACE\venv\Scripts" >> $env:GITHUB_PATH
+        
+    - name: Activate virtual environment (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        source venv/bin/activate
+        echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/venv" >> $GITHUB_ENV
+        echo "$GITHUB_WORKSPACE/venv/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install sv-ttk darkdetect pywinstyles
+
+    - name: Install Linux-specific dependencies
+      if: matrix.platform == 'linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk
+
+    - name: Build executable
+      run: |
+        pyinstaller json-config-writer.spec --clean
+
+    - name: Verify build
+      run: |
+        ls -la dist/
+
+    - name: Test executable (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        # Test that the executable exists and is executable
+        test -x dist/json-config-writer
+        # Note: Can't run GUI app in headless environment, but we can check it exists
+        file dist/json-config-writer
+
+    - name: Test executable (Windows)
+      if: matrix.platform == 'windows'
+      run: |
+        # Test that the executable exists
+        Test-Path dist/json-config-writer.exe
+        # Get file info
+        Get-ChildItem dist/json-config-writer.exe
+
+    - name: Prepare artifacts
+      run: |
+        mkdir -p artifacts
+        
+    - name: Copy executable (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        cp dist/json-config-writer artifacts/json-config-writer-linux
+        chmod +x artifacts/json-config-writer-linux
+
+    - name: Copy executable (Windows)
+      if: matrix.platform == 'windows'
+      run: |
+        Copy-Item dist/json-config-writer.exe artifacts/json-config-writer-windows.exe
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: artifacts/
+        retention-days: 30
+
+    - name: Create release assets (on release)
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: artifacts/json-config-writer-${{ matrix.platform }}${{ matrix.executable_extension }}
+        asset_name: json-config-writer-${{ matrix.platform }}${{ matrix.executable_extension }}
+        asset_content_type: application/octet-stream
