@@ -6,8 +6,9 @@ class BaseElement(ABC):
     """
     An abstract base class for all configuration elements.
     """
-    def __init__(self, key: str):
+    def __init__(self, key: str, name: str):
         self.__key = key
+        self.__name = name
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(key={self.__key})"
@@ -15,6 +16,11 @@ class BaseElement(ABC):
     @property
     def key(self) -> str:
         return self.__key
+    
+    @property
+    def name(self) -> str:
+        return self.__name
+
 
 class EditableElement(BaseElement, ABC):
     """
@@ -25,13 +31,16 @@ class EditableElement(BaseElement, ABC):
 
     def get(self) -> Any: ...
 
+
+
+
 # text-based elements
 class TextElement(EditableElement):
     """
     An abstract base class for text-based configuration elements.
     """
-    def __init__(self, key: str, default: str = "", min_length : int = 0, max_length: int = -1, allowed_chars: str = r"a-zA-Z0-9_.-"):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, default: str = "", min_length : int = 0, max_length: int = -1, allowed_chars: str = r"a-zA-Z0-9_.-"):
+        super().__init__(key, name)
         self.__value = default
         self.__min_length = min_length
         self.__max_length = max_length # -1 means no limit
@@ -63,24 +72,27 @@ class TextElement(EditableElement):
         self.set(value)
 
 class ColorElement(TextElement):
-    def __init__(self, key: str, default: str = "#000000"):
-        super().__init__(key, default, min_length=4, max_length=7, allowed_chars=r"#0-9a-fA-F")
+    def __init__(self, key: str, name: str, default: str = "#000000"):
+        super().__init__(key, name, default, min_length=4, max_length=7, allowed_chars=r"#0-9a-fA-F")
 
 class PathElement(TextElement):
-    def __init__(self, key: str, default: str = ""):
+    def __init__(self, key: str, name: str, default: str = ""):
         # Allow / and \ in paths
-        super().__init__(key, default, min_length=1, max_length=-1, allowed_chars=r"a-zA-Z0-9_.\-\\/")
+        super().__init__(key, name, default, min_length=1, max_length=-1, allowed_chars=r"a-zA-Z0-9_.\-\\/")
 
 class FilePathElement(PathElement): ...
 class DirectoryPathElement(PathElement): ...
+
+
+
 
 T = TypeVar('T')
 class ChoiceElement(EditableElement):
     """
     A class for choice configuration elements.
     """
-    def __init__(self, key: str, choices: Sequence[T], default: T):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, choices: Sequence[T], default: T):
+        super().__init__(key, name)
         if not choices:
             raise ValueError("Choices list cannot be empty")
         if default not in choices:
@@ -106,13 +118,16 @@ class ChoiceElement(EditableElement):
     def choices(self) -> Sequence[object]:
         return self.__choices
 
+
+
+
 # number-based elements
 class IntegerElement(EditableElement):
     """
     A class for integer configuration elements.
     """
-    def __init__(self, key: str, default: int = 0, min_ : None|int = None, max_ : None|int = None):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, default: int = 0, min_ : None|int = None, max_ : None|int = None):
+        super().__init__(key, name)
         self.__value = default
         self.__min = min_
         self.__max = max_
@@ -147,8 +162,8 @@ class FloatElement(EditableElement):
     """
     A class for float configuration elements.
     """
-    def __init__(self, key: str, default: float = 0.0, min_ : None|float = None, max_ : None|float = None):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, default: float = 0.0, min_ : None|float = None, max_ : None|float = None):
+        super().__init__(key, name)
         self.__value = default
         self.__min = min_
         self.__max = max_
@@ -179,13 +194,16 @@ class FloatElement(EditableElement):
     def get(self) -> float:
         return self.__value
 
+
+
+
 # other elements
 class BooleanElement(EditableElement):
     """
     A class for boolean configuration elements.
     """
-    def __init__(self, key: str, default: bool = False):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, default: bool = False):
+        super().__init__(key, name)
         self.__value = default
 
     def from_string(self, value: str) -> None:
@@ -211,8 +229,8 @@ class FixedElement(BaseElement):
     """
     A class for fixed configuration elements that cannot be edited.
     """
-    def __init__(self, key: str, value):
-        super().__init__(key)
+    def __init__(self, key: str, name: str, value):
+        super().__init__(key, name)
         self.__value = value
 
     def __repr__(self) -> str:
@@ -220,3 +238,37 @@ class FixedElement(BaseElement):
 
     def get(self):
         return self.__value
+
+
+
+class ListElement(EditableElement):
+    """
+    A class for list configuration elements.
+    """
+    def __init__(self, key: str, name: str, default: Sequence[str] = ()):
+        super().__init__(key, name)
+        self.__value = list(default)
+    
+    def from_string(self, value: str) -> None:
+        # Expecting a comma-separated list
+        items = [item.strip() for item in value.split(",")]
+        self.set(items)
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(key={self.__key}, value={self.__value})"
+    
+    def set(self, value: Sequence[str]) -> None:
+        if not all(isinstance(item, str) for item in value):
+            raise ValueError("All items in the list must be strings")
+        self.__value = list(value)
+    
+    def get(self) -> Sequence[str]:
+        return self.__value
+
+    def append(self, item: str) -> None:
+        if not isinstance(item, str):
+            raise ValueError("Item must be a string")
+        self.__value.append(item)
+    
+    def remove(self, item: str) -> None:
+        self.__value.remove(item)

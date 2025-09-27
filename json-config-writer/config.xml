@@ -16,7 +16,3 @@
     <DirectoryPathElement name="Output Directory" default="/tmp"/>
     <FilePathElement name="Config File" default="/etc/config.json"/>
 </elements>
-    <!-- 
-    <FilePathElement name="server_config_path" default="/var/minecraft/servers.json"/>
-    <FilePathElement name="client_database_path" default="/var/minecraft/clients.db"/>
-</elements> -->

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 from elements import (TextElement, BooleanElement, ChoiceElement, EditableElement,
                        IntegerElement, FloatElement, ColorElement, PathElement,
-                       FilePathElement, DirectoryPathElement)
+                       ListElement)
 
 
 class ElementWidget(ttk.Frame):
@@ -25,7 +25,7 @@ class TextElementWidget(ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=element.get())
@@ -49,7 +49,7 @@ class BooleanElementWidget(ElementWidget):
         self.element = element
 
         self.var = tk.BooleanVar(value=element.get())
-        self.checkbutton = ttk.Checkbutton(self, text=element.key, variable=self.var)
+        self.checkbutton = ttk.Checkbutton(self, text=element.name, variable=self.var)
         self.checkbutton.pack(side=tk.LEFT, padx=5, pady=5)
 
     
@@ -66,7 +66,7 @@ class ChoiceElementWidget(ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=str(element.get()))
@@ -89,7 +89,7 @@ class IntegerElementWidget(ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=str(element.get()))
@@ -122,7 +122,7 @@ class FloatElementWidget(ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=str(element.get()))
@@ -157,7 +157,7 @@ class ColorElementWidget(ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=element.get())
@@ -188,7 +188,7 @@ class PathElementWidget(ABC, ElementWidget):
         super().__init__(parent)
         self.element = element
 
-        self.label = ttk.Label(self, text=element.key)
+        self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.var = tk.StringVar(value=element.get())
@@ -225,6 +225,17 @@ class DirectoryPathElementWidget(PathElementWidget):
             self.var.set(dir_path)
             self.entry.config(foreground="black")
 
+class ListElementWidget(ElementWidget):
+    """
+    a button to add items to a list, and a 
+    """
+    def __init__(self, parent: tk.Misc, element: ListElement):
+        super().__init__(parent)
+        self.element = element
+
+        self.label = ttk.Label(self, text=element.name)
+
+
 
 def get_all_subclasses(cls : type) -> list[type]:
     subclasses = []
@@ -238,4 +249,3 @@ def get_widget_for_element(element : EditableElement) -> type[ElementWidget]|Non
         if cls.__name__ == f"{element.__class__.__name__}Widget":
             return cls
     return None
-
