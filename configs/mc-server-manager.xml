@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<elements xmlns="http://json-config-writer/schema" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://json-config-writer/schema
+         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/heads/main/json-config-writer/config.xsd">
+    <FilePathElement name="Server config Path" tag="server_config_path" default="/etc/config.json"/>
+</elements>
