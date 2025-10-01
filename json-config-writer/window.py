@@ -4,6 +4,7 @@ from tkinter import filedialog
 import sv_ttk
 from enum import StrEnum
 from typing import Literal
+import json
 import sys
 import darkdetect
 if sys.platform == "win32":
@@ -68,14 +69,18 @@ class MainWindow(tk.Tk):
 
     def select_config_xml(self):
         file_path = filedialog.askopenfilename(title="Select config.xml", filetypes=[("XML files", "*.xml")])
-        return file_path or None
+        if not file_path:
+            raise RuntimeError("No file selected")
+        return file_path
+    
+    def generate_json(self):
+        config = {widget.element.tag: widget.element.get() for widget in self.widgets}
+        return json.dumps(config, indent=4)
 
     def on_confirm(self):
         all_valid = all(widget.confirm() for widget in self.widgets)
         if all_valid:
-            print("All values are valid:")
-            for widget in self.widgets:
-                elem = widget.element
-                print(f"  {elem.key}: {elem.get()}")
+            print("Generated JSON:")
+            print(self.generate_json())
         else:
             print("Some values are invalid. Please correct them.")

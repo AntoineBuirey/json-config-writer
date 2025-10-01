@@ -5,12 +5,17 @@ from abc import ABC, abstractmethod
 
 from elements import (TextElement, BooleanElement, ChoiceElement, EditableElement,
                        IntegerElement, FloatElement, ColorElement, PathElement,
-                       ListElement)
+                       ListElement, EditableElement)
 
 
 class ElementWidget(ttk.Frame):
-    def __init__(self, parent: tk.Misc, *args, **kwargs):
+    def __init__(self, parent: tk.Misc, element: EditableElement, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        self.__element = element
+        
+    @property
+    def element(self) -> EditableElement:
+        return self.__element
 
     def confirm(self) -> bool:
         """
@@ -22,8 +27,7 @@ class ElementWidget(ttk.Frame):
 
 class TextElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: TextElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -39,14 +43,13 @@ class TextElementWidget(ElementWidget):
             self.entry.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.entry.config(foreground="red")
             return False
 
 class BooleanElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: BooleanElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.var = tk.BooleanVar(value=element.get())
         self.checkbutton = ttk.Checkbutton(self, text=element.name, variable=self.var)
@@ -58,13 +61,12 @@ class BooleanElementWidget(ElementWidget):
             self.element.set(self.var.get())
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             return False
 
 class ChoiceElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: ChoiceElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -80,14 +82,13 @@ class ChoiceElementWidget(ElementWidget):
             self.combobox.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.combobox.config(foreground="red")
             return False
 
 class IntegerElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: IntegerElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -113,14 +114,13 @@ class IntegerElementWidget(ElementWidget):
             self.entry.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.entry.config(foreground="red")
             return False
 
 class FloatElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: FloatElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -148,14 +148,13 @@ class FloatElementWidget(ElementWidget):
             self.entry.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.entry.config(foreground="red")
             return False
 
 class ColorElementWidget(ElementWidget):
     def __init__(self, parent: tk.Misc, element: ColorElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -179,14 +178,13 @@ class ColorElementWidget(ElementWidget):
             self.entry.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.entry.config(foreground="red")
             return False
 
 class PathElementWidget(ABC, ElementWidget):
     def __init__(self, parent: tk.Misc, element: PathElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
@@ -207,7 +205,7 @@ class PathElementWidget(ABC, ElementWidget):
             self.entry.config(foreground="black")
             return True
         except ValueError as e:
-            print(f"Invalid input for {self.element.key}: {e}")
+            print(f"Invalid input for {self.element.tag}: {e}")
             self.entry.config(foreground="red")
             return False
 
@@ -227,15 +225,60 @@ class DirectoryPathElementWidget(PathElementWidget):
 
 class ListElementWidget(ElementWidget):
     """
-    a button to add items to a list, and a 
+    name of the list, then a entry field to add a new item, then a button to add it to the list
+    below a listbox showing the current items, with a button next to each item to remove it
     """
     def __init__(self, parent: tk.Misc, element: ListElement):
-        super().__init__(parent)
-        self.element = element
+        super().__init__(parent, element)
 
         self.label = ttk.Label(self, text=element.name)
-
-
+        self.label.pack(side=tk.TOP, anchor="w", padx=5, pady=5)
+        
+        self.frame = ttk.Frame(self)
+        self.frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        self.var = tk.StringVar()
+        self.entry = ttk.Entry(self.frame, textvariable=self.var)
+        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=5)
+        self.add_button = ttk.Button(self.frame, text="Add", command=self.add_item)
+        self.add_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        self.listbox = tk.Listbox(self, height=5)
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.listbox.yview)
+        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        self.listbox.config(yscrollcommand=self.scrollbar.set)
+        for item in element.get():
+            self.listbox.insert(tk.END, item)
+        self.remove_button = ttk.Button(self, text="Remove Selected", command=self.remove_selected)
+        self.remove_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+    def add_item(self):
+        item = self.var.get().strip()
+        if item and item not in self.listbox.get(0, tk.END):
+            self.listbox.insert(tk.END, item)
+            self.var.set("")
+            self.entry.config(foreground="black")
+        elif item in self.listbox.get(0, tk.END):
+            print(f"Item '{item}' already in the list.")
+            self.entry.config(foreground="red")
+        else:
+            self.entry.config(foreground="red")
+    
+    def remove_selected(self):
+        selected_indices = self.listbox.curselection()
+        for index in reversed(selected_indices):
+            self.listbox.delete(index)
+    
+    def confirm(self) -> bool:
+        try:
+            items = list(self.listbox.get(0, tk.END))
+            self.element.set(items)
+            self.listbox.config(foreground="black")
+            return True
+        except ValueError as e:
+            print(f"Invalid input for {self.element.tag}: {e}")
+            self.listbox.config(foreground="red")
+            return False
 
 def get_all_subclasses(cls : type) -> list[type]:
     subclasses = []

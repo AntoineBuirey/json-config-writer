@@ -2,17 +2,17 @@
 <elements xmlns="http://json-config-writer/schema" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://json-config-writer/schema
-         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/heads/main/json-config-writer/config.xsd">
-    <TextElement name="Username" default="user"/>
-    <BooleanElement name="Enable Feature" default="true"/>
-    <ChoiceElement name="Color Scheme" default="Light">
+         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/tags/1.0.1/json-config-writer/config.xsd">
+    <TextElement tag="username" name="Username" default="user"/>
+    <BooleanElement tag="enable_feature" name="Enable Feature" default="true"/>
+    <ChoiceElement tag="colore_scheme" name="Color Scheme" default="Light">
         <Choice value="Light"/>
         <Choice value="Dark"/>
         <Choice value="System"/>
     </ChoiceElement>
-    <IntegerElement name="Max Retries" default="3" min="0" max="10"/>
-    <FloatElement name="Threshold" default="0.5" min="0.0" max="1.0"/>
-    <ColorElement name="Favorite Color" default="#ff0000"/>
-    <DirectoryPathElement name="Output Directory" default="/tmp"/>
-    <FilePathElement name="Config File" default="/etc/config.json"/>
+    <IntegerElement tag="max_retry" name="Max Retries" default="3" min="0" max="10"/>
+    <FloatElement tag="threshold" name="Threshold" default="0.5" min="0.0" max="1.0"/>
+    <ColorElement tag="fav_color" name="Favorite Color" default="#ff0000"/>
+    <DirectoryPathElement tag="outdir" name="Output Directory" default="/tmp"/>
+    <FilePathElement tag="config_file" name="Config File" default="/etc/config.json"/>
 </elements>

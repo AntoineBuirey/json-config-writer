@@ -2,6 +2,10 @@
 <elements xmlns="http://json-config-writer/schema" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://json-config-writer/schema
-         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/heads/main/json-config-writer/config.xsd">
-    <FilePathElement name="Server config Path" tag="server_config_path" default="/etc/config.json"/>
+         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/tags/1.0.3/json-config-writer/config.xsd">
+    <ListElement name="Directories for storing servers" tag="minecraft_servers_dirs">
+        <Default value="/var/minecraft/servers" />
+    </ListElement>
+    <FilePathElement name="Server config Path" tag="server_config_path" default="/var/minecraft/servers.json"/>
+    <FilePathElement name="Client database Path" tag="client_database_path" default="/var/minecraft/client.db"/>
 </elements>
