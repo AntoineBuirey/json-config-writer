@@ -5,27 +5,32 @@ from abc import ABC, abstractmethod
 
 from elements import (TextElement, BooleanElement, ChoiceElement, EditableElement,
                        IntegerElement, FloatElement, ColorElement, PathElement,
-                       ListElement, EditableElement)
+                       ListElement, EditableElement, BaseElement, SubCategoryElement)
 
 
-class ElementWidget(ttk.Frame):
-    def __init__(self, parent: tk.Misc, element: EditableElement, *args, **kwargs):
+class ElementWidget(ttk.Frame, ABC):
+    def __init__(self, parent: tk.Misc, element: BaseElement, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.__element = element
-        
+    
+    @property
+    def element(self) -> BaseElement:
+        return self.__element
+
+    @abstractmethod
+    def confirm(self) -> bool: ...
+
+class EditableElementWidget(ElementWidget, ABC):
+    def __init__(self, parent: tk.Misc, element: EditableElement, *args, **kwargs):
+        super().__init__(parent, element, *args, **kwargs)
+        self.__element = element
+
     @property
     def element(self) -> EditableElement:
         return self.__element
 
-    def confirm(self) -> bool:
-        """
-        Confirm the value in the widget and update the associated element.
-        Returns True if the value is valid, False otherwise.
-        """
-        raise NotImplementedError("Subclasses must implement this method")
 
-
-class TextElementWidget(ElementWidget):
+class TextElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: TextElement):
         super().__init__(parent, element)
 
@@ -47,7 +52,7 @@ class TextElementWidget(ElementWidget):
             self.entry.config(foreground="red")
             return False
 
-class BooleanElementWidget(ElementWidget):
+class BooleanElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: BooleanElement):
         super().__init__(parent, element)
 
@@ -64,7 +69,7 @@ class BooleanElementWidget(ElementWidget):
             print(f"Invalid input for {self.element.tag}: {e}")
             return False
 
-class ChoiceElementWidget(ElementWidget):
+class ChoiceElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: ChoiceElement):
         super().__init__(parent, element)
 
@@ -86,7 +91,7 @@ class ChoiceElementWidget(ElementWidget):
             self.combobox.config(foreground="red")
             return False
 
-class IntegerElementWidget(ElementWidget):
+class IntegerElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: IntegerElement):
         super().__init__(parent, element)
 
@@ -118,7 +123,7 @@ class IntegerElementWidget(ElementWidget):
             self.entry.config(foreground="red")
             return False
 
-class FloatElementWidget(ElementWidget):
+class FloatElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: FloatElement):
         super().__init__(parent, element)
 
@@ -152,7 +157,7 @@ class FloatElementWidget(ElementWidget):
             self.entry.config(foreground="red")
             return False
 
-class ColorElementWidget(ElementWidget):
+class ColorElementWidget(EditableElementWidget):
     def __init__(self, parent: tk.Misc, element: ColorElement):
         super().__init__(parent, element)
 
@@ -182,7 +187,7 @@ class ColorElementWidget(ElementWidget):
             self.entry.config(foreground="red")
             return False
 
-class PathElementWidget(ABC, ElementWidget):
+class PathElementWidget(EditableElementWidget, ABC):
     def __init__(self, parent: tk.Misc, element: PathElement):
         super().__init__(parent, element)
 
@@ -223,7 +228,7 @@ class DirectoryPathElementWidget(PathElementWidget):
             self.var.set(dir_path)
             self.entry.config(foreground="black")
 
-class ListElementWidget(ElementWidget):
+class ListElementWidget(EditableElementWidget):
     """
     name of the list, then a entry field to add a new item, then a button to add it to the list
     below a listbox showing the current items, with a button next to each item to remove it
@@ -248,7 +253,7 @@ class ListElementWidget(ElementWidget):
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         self.listbox.config(yscrollcommand=self.scrollbar.set)
         for item in element.get():
-            self.listbox.insert(tk.END, item)
+            self.listbox.insert(tk.END, str(item))
         self.remove_button = ttk.Button(self, text="Remove Selected", command=self.remove_selected)
         self.remove_button.pack(side=tk.LEFT, padx=5, pady=5)
         
@@ -280,6 +285,29 @@ class ListElementWidget(ElementWidget):
             self.listbox.config(foreground="red")
             return False
 
+
+class SubCategoryElementWidget(ElementWidget):
+    def __init__(self, parent: tk.Misc, element: SubCategoryElement):
+        super().__init__(parent, element)
+        self.label = ttk.Label(self, text=element.name, font=("TkDefaultFont", 10, "bold"))
+        self.label.pack(side=tk.TOP, anchor="w", padx=5, pady=5)
+        self.frame = ttk.Frame(self)
+        self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.sub_widgets: list[ElementWidget] = []
+        for sub_element in element.get_elements():
+            widget_class = get_widget_for_element(sub_element)
+            widget = widget_class(self.frame, sub_element)
+            widget.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+            self.sub_widgets.append(widget)
+
+    def confirm(self) -> bool:
+        all_valid = True
+        for widget in self.sub_widgets:
+            if hasattr(widget, "confirm") and not widget.confirm():
+                all_valid = False
+        return all_valid
+
+
 def get_all_subclasses(cls : type) -> list[type]:
     subclasses = []
     for subclass in cls.__subclasses__():
@@ -287,8 +315,8 @@ def get_all_subclasses(cls : type) -> list[type]:
         subclasses.extend(get_all_subclasses(subclass))
     return subclasses
 
-def get_widget_for_element(element : EditableElement) -> type[ElementWidget]|None:
+def get_widget_for_element(element : BaseElement) -> type[ElementWidget]:
     for cls in get_all_subclasses(ElementWidget):
         if cls.__name__ == f"{element.__class__.__name__}Widget":
             return cls
-    return None
+    raise ValueError(f"No widget found for element type {element.__class__.__name__}")

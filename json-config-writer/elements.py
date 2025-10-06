@@ -1,6 +1,11 @@
 import re
 from typing import TypeVar, Sequence, Any
 from abc import ABC, abstractmethod
+import json
+
+JsonableType = str | int | float | bool | list['JsonableType'] | dict[str, 'JsonableType']
+
+Undefined = object()
 
 class BaseElement(ABC):
     """
@@ -9,6 +14,7 @@ class BaseElement(ABC):
     def __init__(self, tag: str, name: str):
         self.__tag = tag
         self.__name = name
+        self.__value = ""
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(tag={self.__tag})"
@@ -20,6 +26,9 @@ class BaseElement(ABC):
     @property
     def name(self) -> str:
         return self.__name
+    
+    def get(self) -> JsonableType:
+        return self.__value
 
 class EditableElement(BaseElement, ABC):
     """
@@ -27,9 +36,6 @@ class EditableElement(BaseElement, ABC):
     """
     @abstractmethod
     def from_string(self, value: str): ...
-
-    def get(self) -> Any: ...
-
 
     def set(self, value: Any): ...
 
@@ -99,6 +105,8 @@ class ChoiceElement(EditableElement):
         if default not in choices:
             raise ValueError("Default value must be one of the choices")
         self.__choices = choices
+        if not isinstance(default, (str, int, float, bool)):
+            raise ValueError("Default value must be of a JSON-serializable type (str, int, float, bool)")
         self.__value = default
 
     def from_string(self, value: str) -> None:
@@ -107,12 +115,12 @@ class ChoiceElement(EditableElement):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(tag={self.__tag}, value={self.__value}, choices={self.__choices})"
 
-    def set(self, value: object) -> None:
+    def set(self, value: str|int|float|bool) -> None:
         if value not in self.__choices:
             raise ValueError(f"Value must be one of the choices: {self.__choices}")
         self.__value = value
 
-    def get(self) -> object:
+    def get(self) -> str|int|float|bool:
         return self.__value
     
     @property
@@ -263,8 +271,8 @@ class ListElement(EditableElement):
             raise ValueError("All items in the list must be strings")
         self.__value = list(value)
     
-    def get(self) -> Sequence[str]:
-        return self.__value
+    def get(self) -> list[JsonableType]:
+        return list(self.__value)
 
     def append(self, item: str) -> None:
         if not isinstance(item, str):
@@ -273,3 +281,37 @@ class ListElement(EditableElement):
     
     def remove(self, item: str) -> None:
         self.__value.remove(item)
+
+
+class SubCategoryElement(BaseElement):
+    """
+    A class for sub-category configuration elements that can contain other elements.
+    """
+    def __init__(self, tag: str, name: str, elements: Sequence[BaseElement] = ()):
+        super().__init__(tag, name)
+        self.__elements = list(elements)
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(tag={self.__tag}, elements={self.__elements})"
+    
+    @property
+    def elements(self) -> Sequence[BaseElement]:
+        return self.__elements
+    
+    def add_element(self, element: BaseElement) -> None:
+        self.__elements.append(element)
+    
+    def remove_element(self, element: BaseElement) -> None:
+        self.__elements.remove(element)
+        
+    def get(self) -> JsonableType:
+        return {elem.tag: elem.get() for elem in self.__elements}
+    
+    def get_elements(self) -> Sequence[BaseElement]:
+        return self.__elements
+    
+    def get_by_tag(self, tag: str) -> BaseElement | None:
+        for elem in self.__elements:
+            if elem.tag == tag:
+                return elem
+        return None

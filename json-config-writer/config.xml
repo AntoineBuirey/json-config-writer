@@ -2,7 +2,7 @@
 <elements xmlns="http://json-config-writer/schema" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://json-config-writer/schema
-         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/tags/1.0.1/json-config-writer/config.xsd">
+         https://raw.githubusercontent.com/AntoineBuirey/xml-schema/refs/tags/1.0.4/json-config-writer/config.xsd">
     <TextElement tag="username" name="Username" default="user"/>
     <BooleanElement tag="enable_feature" name="Enable Feature" default="true"/>
     <ChoiceElement tag="colore_scheme" name="Color Scheme" default="Light">

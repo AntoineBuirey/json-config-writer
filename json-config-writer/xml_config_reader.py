@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 import re
 from elements import (TextElement, BooleanElement, ChoiceElement, EditableElement,
-                       IntegerElement, FloatElement, ColorElement,
+                       IntegerElement, FloatElement, ColorElement, SubCategoryElement,
                        FilePathElement, DirectoryPathElement, ListElement)
 
 def get_element_tag(tag: str) -> str:
@@ -74,6 +74,20 @@ def _parse_list_element(elem : ET.Element):
     defaults = [default.attrib["value"] for default in elem.findall("{http://json-config-writer/schema}Default")]
     return ListElement(tag, name, defaults)
 
+def _parse_subcategory_element(elem : ET.Element):
+    tag = elem.attrib["tag"]
+    name = elem.attrib["name"]
+    sub_elements = []
+    for sub_elem in elem:
+        tag_name = get_element_tag(sub_elem.tag)
+        if tag_name in _PARSERS:
+            parser = _PARSERS[tag_name]
+            element = parser(sub_elem)
+            sub_elements.append(element)
+        else:
+            print(f"Unknown sub-element type: {tag_name}")
+    return SubCategoryElement(tag, name, sub_elements)
+
 _PARSERS = {
     "TextElement": _parse_text_element,
     "BooleanElement": _parse_boolean_element,
@@ -84,6 +98,7 @@ _PARSERS = {
     "FilePathElement": _parse_file_path_element,
     "DirectoryPathElement": _parse_directory_path_element,
     "ListElement": _parse_list_element,
+    "SubCategoryElement": _parse_subcategory_element,
 }
 
 def read_config(file_path: str) -> list[EditableElement]:
